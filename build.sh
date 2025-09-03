@@ -21,32 +21,29 @@ do
     cp $CDIR/$f $build_dir/
 done
 
-# Detect architecture if not set via -A
+# Detect architecture
 if [ -z "$ARCH" ]; then
   ARCH="$(uname -m)"
 fi
 
-# URLs for different architectures
-FISH_AARCH64_URL='https://github.com/fish-shell/fish-shell/releases/download/4.0.2/fish-static-aarch64-4.0.2.tar.xz'
-FISH_AARCH64_TAR="fish-static-aarch64-4.0.2.tar.xz"
-FISH_X86_64_URL='https://github.com/xxh/fish-portable/releases/download/3.4.1/fish-portable-musl-alpine-Linux-x86_64.tar.gz'
-FISH_X86_64_TAR="fish-portable-musl-alpine-Linux-x86_64.tar.gz"
+# If ARCH env variable is set, override detection
+if [ "$ARCH" = "aarch64" ]; then
+  # Download aarch64/arm version
+  url='https://github.com/fish-shell/fish-shell/releases/download/4.0.2/fish-static-aarch64-4.0.2.tar.xz'
+  tarname='fish-static-aarch64-4.0.2.tar.xz'
+  extract_cmd="tar -xJf $tarname -C fish-portable"
+else
+  # Download x86_64 version
+  url='https://github.com/xxh/fish-portable/releases/download/3.4.1/fish-portable-musl-alpine-Linux-x86_64.tar.gz'
+  tarname='fish-portable-musl-alpine-Linux-x86_64.tar.gz'
+  extract_cmd="tar -xzf $tarname -C fish-portable"
+fi
 
 cd $build_dir
 
 [ $QUIET ] && arg_q='-q' || arg_q=''
 [ $QUIET ] && arg_s='-s' || arg_s=''
 [ $QUIET ] && arg_progress='' || arg_progress='--show-progress'
-
-if [ "$ARCH" = "aarch64" ]; then
-  url="$FISH_AARCH64_URL"
-  tarname="$FISH_AARCH64_TAR"
-  extract_cmd="tar -xJf $tarname -C fish-portable"
-else
-  url="$FISH_X86_64_URL"
-  tarname="$FISH_X86_64_TAR"
-  extract_cmd="tar -xzf $tarname -C fish-portable"
-fi
 
 if [ -x "$(command -v wget)" ]; then
   wget $arg_q $arg_progress $url -O $tarname
