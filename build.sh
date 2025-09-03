@@ -21,8 +21,16 @@ do
     cp $CDIR/$f $build_dir/
 done
 
-url='https://github.com/xxh/fish-portable/releases/download/3.4.1/fish-portable-musl-alpine-Linux-x86_64.tar.gz'
-tarname=`basename $url`
+# Detect architecture if not set via -A
+if [ -z "$ARCH" ]; then
+  ARCH="$(uname -m)"
+fi
+
+# URLs for different architectures
+FISH_AARCH64_URL='https://github.com/fish-shell/fish-shell/releases/download/4.0.2/fish-static-aarch64-4.0.2.tar.xz'
+FISH_AARCH64_TAR="fish-static-aarch64-4.0.2.tar.xz"
+FISH_X86_64_URL='https://github.com/xxh/fish-portable/releases/download/3.4.1/fish-portable-musl-alpine-Linux-x86_64.tar.gz'
+FISH_X86_64_TAR="fish-portable-musl-alpine-Linux-x86_64.tar.gz"
 
 cd $build_dir
 
@@ -30,14 +38,25 @@ cd $build_dir
 [ $QUIET ] && arg_s='-s' || arg_s=''
 [ $QUIET ] && arg_progress='' || arg_progress='--show-progress'
 
+if [ "$ARCH" = "aarch64" ]; then
+  url="$FISH_AARCH64_URL"
+  tarname="$FISH_AARCH64_TAR"
+  extract_cmd="tar -xJf $tarname -C fish-portable"
+else
+  url="$FISH_X86_64_URL"
+  tarname="$FISH_X86_64_TAR"
+  extract_cmd="tar -xzf $tarname -C fish-portable"
+fi
+
 if [ -x "$(command -v wget)" ]; then
   wget $arg_q $arg_progress $url -O $tarname
 elif [ -x "$(command -v curl)" ]; then
   curl $arg_s -L $url -o $tarname
 else
   echo Install wget or curl
+  exit 1
 fi
 
 mkdir fish-portable
-tar -xzf $tarname -C fish-portable
+eval "$extract_cmd"
 rm $tarname
